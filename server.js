@@ -12,14 +12,12 @@ const io = socketIo(server, {
     }
 });
 
-const PORT = process.env.PORT || 8080;
-try {
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-  });
-} catch (error) {
-  console.error("Server failed to start:", error);
-}
+const PORT = process.env.PORT || 3000;  // Use Railway's assigned port
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+
 
 
 app.use(cors());
