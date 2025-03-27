@@ -12,15 +12,10 @@ const io = socketIo(server, {
     }
 });
 
-const PORT = process.env.PORT || 3000;  // Use Railway's assigned port
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
-
-
+const PORT = process.env.PORT || 3000; // Use Railway's assigned port
 
 app.use(cors());
+app.use(express.static("public"));
 
 let rooms = {}; // Store game rooms
 
@@ -84,7 +79,8 @@ io.on("connection", (socket) => {
         }
     });
 });
-app.use(express.static("public"));
+
+// ✅ Use only `server.listen`, remove `app.listen`
 server.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
+    console.log(`🚀 Server running at http://0.0.0.0:${PORT}`);
 });
