@@ -12,15 +12,16 @@ const io = socketIo(server, {
     }
 });
 
+// Set PORT to Railway-assigned or default to 3000
 
-const PORT = process.env.PORT || 3000;  // Use Railway's assigned port
-
-// Root route to check if the server is running
-app.get("/", (req, res) => {
-    res.send("Server is running!");
-});
+const PORT = process.env.PORT || 3000;  
 
 app.use(cors());
+
+// ✅ Handle root route
+app.get("/", (req, res) => {
+    res.send("✅ Server is running!");
+});
 
 let rooms = {}; // Store game rooms
 
@@ -85,9 +86,12 @@ io.on("connection", (socket) => {
     });
 });
 
+// Serve static files from public directory
 app.use(express.static("public"));
 
+// Start the server
 server.listen(PORT, () => {
     console.log(`🚀 Server running at http://0.0.0.0:${PORT}`);
 });
+
 
