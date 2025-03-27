@@ -1,53 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stone Paper Scissors - Online</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="/socket.io/socket.io.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stone Paper Scissors</title>
 </head>
 <body>
-    <div class="game-container">
-        <h1>🪨📜✂️ Stone Paper Scissors - Online</h1>
-        <p id="status">Waiting for another player...</p>
+  <h1>Stone Paper Scissors Game</h1>
+  <div id="status"></div>
+  <button id="playButton" style="display:none;">Start Game</button>
+  
 
-        <div class="choices">
-            <button class="choice" id="rock">🪨</button>
-            <button class="choice" id="paper">📜</button>
-            <button class="choice" id="scissors">✂️</button>
-        </div>
+  <script>
+    const socket = new WebSocket('ws://localhost:8080'); // Change to your server URL
 
-        <p id="timer"></p>
+    socket.onopen = function() {
+      console.log('Connected to the server!');
+      document.getElementById('status').innerText = 'Waiting for second player...';
+    };
 
-        <div id="result"></div>
-    </div>
+    socket.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      console.log(data.message);
 
-    <script>
-        const socket = io();
-        let playerChoice = "";
-        let countdown = 3;
+      if (data.message === 'Game starting!') {
+        document.getElementById('status').innerText = 'Game starting!';
+        document.getElementById('playButton').style.display = 'block'; // Show the "Start Game" button
+      }
+    };
 
-        document.querySelectorAll(".choice").forEach(button => {
-            button.addEventListener("click", () => {
-                playerChoice = button.id;
-                socket.emit("playerChoice", playerChoice);
-                document.getElementById("status").innerText = "Waiting for the other player...";
-            });
-        });
+    socket.onerror = function(error) {
+      console.error('WebSocket error:', error);
+    };
 
-        socket.on("updateStatus", (msg) => {
-            document.getElementById("status").innerText = msg;
-        });
+    socket.onclose = function() {
+      console.log('Disconnected from server');
+      document.getElementById('status').innerText = 'Disconnected from server.';
+    };
 
-        socket.on("countdown", (timeLeft) => {
-            document.getElementById("timer").innerText = `⏳ Selecting in ${timeLeft} sec`;
-        });
+    // Add functionality to handle player moves when the game starts
+    document.getElementById('playButton').addEventListener('click', function() {
+      // Send player's move (for example, "rock")
+      socket.send(JSON.stringify({ move: 'rock' }));
 
-        socket.on("result", (result) => {
-            document.getElementById("result").innerText = result;
-            document.getElementById("timer").innerText = "";
-        });
-    </script>
+      document.getElementById('status').innerText = 'Waiting for opponent to play...';
+      document.getElementById('playButton').style.display = 'none'; // Hide button after move
+    });
+  </script>
 </body>
 </html>
+

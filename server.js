@@ -1,95 +1,46 @@
-const express = require("express");
-const http = require("http");
-const socketIo = require("socket.io");
-const cors = require("cors");
+// server.js
+const WebSocket = require('ws');
+const http = require('http');
 
-const app = express();
-const server = http.createServer(app);
-const io = socketIo(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Stone Paper Scissors Game Server');
 });
 
-// Use the environment-provided PORT or default to 3000 for local development
+// Create WebSocket server
+const wss = new WebSocket.Server({ server });
 
-const PORT = process.env.PORT || 3000;
+let players = []; // Store connected players
+let gameState = 'waiting'; // Track the state of the game
 
-app.use(cors());
 
-// Add a simple route to verify if the server is accessible
-app.get("/", (req, res) => {
-    res.send("Server is running!");
-});
+wss.on('connection', ws => {
+  console.log('New player connected!');
+  
+  // Add the player to the list
+  players.push(ws);
 
-let rooms = {}; // Store game rooms
+  // Send a welcome message to the connected player
+  ws.send(JSON.stringify({ message: 'You are connected!' }));
 
-io.on("connection", (socket) => {
-    console.log(`✅ A user connected: ${socket.id}`);
-
-    socket.on("createRoom", (roomCode) => {
-        if (!rooms[roomCode]) {
-            rooms[roomCode] = { players: [], choices: {} };
-        }
-        if (rooms[roomCode].players.length < 2) {
-            rooms[roomCode].players.push(socket.id);
-            socket.join(roomCode);
-            console.log(`🏠 Player ${socket.id} joined room: ${roomCode}`);
-            io.to(roomCode).emit("playerJoined", rooms[roomCode].players.length);
-        }
-        if (rooms[roomCode].players.length === 2) {
-            io.to(roomCode).emit("gameStart");
-        }
+  // Once two players are connected, start the game
+  if (players.length === 2 && gameState === 'waiting') {
+    gameState = 'started'; // Update game state
+    players.forEach(player => {
+      player.send(JSON.stringify({ message: 'Game starting!' }));
     });
+  }
 
-    socket.on("makeChoice", ({ roomCode, choice }) => {
-        if (rooms[roomCode]) {
-            rooms[roomCode].choices[socket.id] = choice;
-            if (Object.keys(rooms[roomCode].choices).length === 2) {
-                determineWinner(roomCode);
-            }
-        }
-    });
+  // Handle incoming messages from the players
+  ws.on('message', message => {
+    console.log(`Received: ${message}`);
+    // Handle the game logic here (e.g., player choices)
+  });
 
-    function determineWinner(roomCode) {
-        let players = rooms[roomCode].players;
-        let choices = rooms[roomCode].choices;
-        let player1 = players[0];
-        let player2 = players[1];
+  // Handle disconnection of a player
+  ws.on('close', () => {
+    console.log('Player
 
-        let result;
-        if (choices[player1] === choices[player2]) {
-            result = "draw";
-        } else if (
-            (choices[player1] === "rock" && choices[player2] === "scissors") ||
-            (choices[player1] === "scissors" && choices[player2] === "paper") ||
-            (choices[player1] === "paper" && choices[player2] === "rock")
-        ) {
-            result = player1;
-        } else {
-            result = player2;
-        }
-
-        io.to(roomCode).emit("gameResult", { winner: result, choices });
-        rooms[roomCode].choices = {}; // Reset choices
-    }
-
-    socket.on("disconnect", () => {
-        console.log(`❌ A user disconnected: ${socket.id}`);
-        for (let room in rooms) {
-            rooms[room].players = rooms[room].players.filter(id => id !== socket.id);
-            if (rooms[room].players.length === 0) {
-                delete rooms[room];
-            }
-        }
-    });
-});
-
-// Listen on the dynamic or local port
-server.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
-});
 
 
 
