@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stone Paper Scissors - Online</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🪨📜✂️ Stone Paper Scissors - Online</h1>
+        <p id="status">Waiting for another player...</p>
+
+        <div class="choices">
+            <button class="choice" id="rock">🪨</button>
+            <button class="choice" id="paper">📜</button>
+            <button class="choice" id="scissors">✂️</button>
+        </div>
+
+        <p id="timer"></p>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const socket = io();
+        let playerChoice = "";
+        let countdown = 3;
+
+        document.querySelectorAll(".choice").forEach(button => {
+            button.addEventListener("click", () => {
+                playerChoice = button.id;
+                socket.emit("playerChoice", playerChoice);
+                document.getElementById("status").innerText = "Waiting for the other player...";
+            });
+        });
+
+        socket.on("updateStatus", (msg) => {
+            document.getElementById("status").innerText = msg;
+        });
+
+        socket.on("countdown", (timeLeft) => {
+            document.getElementById("timer").innerText = `⏳ Selecting in ${timeLeft} sec`;
+        });
+
+        socket.on("result", (result) => {
+            document.getElementById("result").innerText = result;
+            document.getElementById("timer").innerText = "";
+        });
+    </script>
+</body>
+</html>
